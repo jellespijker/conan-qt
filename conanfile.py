@@ -61,7 +61,7 @@ class QtConan(ConanFile):
         "openssl": [True, False],
         "with_pcre2": [True, False],
         "with_glib": [True, False],
-        # "with_libiconv": [True, False],  # Qt tests failure "invalid conversion from const char** to char**"
+        "with_libiconv": [True, False],  # Qt tests failure "invalid conversion from const char** to char**"
         "with_doubleconversion": [True, False],
         "with_freetype": [True, False],
         "with_fontconfig": [True, False],
@@ -92,26 +92,27 @@ class QtConan(ConanFile):
     default_options = dict({
         "shared": True,
         "commercial": False,
+
         "opengl": "desktop",
         "with_vulkan": False,
         "openssl": True,
-        "with_pcre2": True,
+        "with_pcre2": False,
         "with_glib": True,
-        # "with_libiconv": True,
+        "with_libiconv": False,
         "with_doubleconversion": True,
         "with_freetype": True,
         "with_fontconfig": True,
-        "with_icu": True,
-        "with_harfbuzz": True,
+        "with_icu": False,
+        "with_harfbuzz": False,
         "with_libjpeg": True,
         "with_libpng": True,
-        "with_sqlite3": True,
-        "with_mysql": True,
-        "with_pq": True,
-        "with_odbc": True,
-        "with_sdl2": True,
+        "with_sqlite3": False,
+        "with_mysql": False,
+        "with_pq": False,
+        "with_odbc": False,
+        "with_sdl2": False,
         "with_libalsa": False,
-        "with_openal": True,
+        "with_openal": False,
         "with_zstd": True,
 
         "GUI": True,
@@ -125,7 +126,7 @@ class QtConan(ConanFile):
     }, **{module: False for module in _submodules if module != 'qtbase'}
     )
     requires = "zlib/1.2.11"
-    short_paths = True
+    # short_paths = True
 
     def build_requirements(self):
         if tools.os_info.is_windows and self.settings.compiler == "Visual Studio":
@@ -189,6 +190,7 @@ class QtConan(ConanFile):
                 _check_python_version()
 
     def config_options(self):
+        self.options["zlib"].shared = self.options.shared
         if self.settings.os != "Linux":
             self.options.with_icu = False
         if self.settings.compiler == "apple-clang":
@@ -202,7 +204,7 @@ class QtConan(ConanFile):
         if conan_version < Version("1.20.0"):
             raise ConanInvalidConfiguration("This recipe needs at least conan 1.20.0, please upgrade.")
         if self.settings.os != 'Linux':
-        #     self.options.with_libiconv = False
+            self.options.with_libiconv = False
             self.options.with_fontconfig = False
         if self.settings.compiler == "gcc" and Version(self.settings.compiler.version.value) < "5.3":
             self.options.with_mysql = False
@@ -284,57 +286,87 @@ class QtConan(ConanFile):
     def requirements(self):
         if self.options.openssl:
             self.requires("openssl/1.1.1g")
+            self.options["openssl"].shared = self.options.shared
+            self.options["pcre"].shared = self.options.shared
         if self.options.with_pcre2:
             self.requires("pcre2/10.33")
-
+            self.options["pcre2"].shared = self.options.shared
         if self.options.with_glib:
             self.requires("glib/2.65.1")
-        # if self.options.with_libiconv:
-        #     self.requires("libiconv/1.16")
+            self.options["glib"].shared = self.options.shared
+            self.options["libelf"].shared = self.options.shared
+            self.options["libffi"].shared = self.options.shared
+            self.options["libmount"].shared = self.options.shared
+            # self.options["libselinux"].shared = self.options.shared
+        if self.options.with_libiconv:
+            self.requires("libiconv/1.16")
+            self.options["libiconv"].shared = self.options.shared
         if self.options.with_doubleconversion and not self.options.multiconfiguration:
             self.requires("double-conversion/3.1.5")
+            self.options["double-conversion"].shared = self.options.shared
         if self.options.with_freetype and not self.options.multiconfiguration:
             self.requires("freetype/2.10.2")
+            self.options["freetype"].shared = self.options.shared
+            self.options["bzip2"].shared = self.options.shared
         if self.options.with_fontconfig:
-            self.requires("fontconfig/2.13.91")
+            self.requires("fontconfig/2.13.91@jellespijker/testing")
+            self.options["fontconfig"].shared = self.options.shared
+            self.options["expat"].shared = self.options.shared
+            self.options["libuuid"].shared = self.options.shared
         if self.options.with_icu:
             self.requires("icu/64.2")
+            self.options["icu"].shared = self.options.shared
         if self.options.with_harfbuzz and not self.options.multiconfiguration:
             self.requires("harfbuzz/2.6.8@")
+            self.options["harfbuzz"].shared = self.options.shared
         if self.options.with_libjpeg and not self.options.multiconfiguration:
             self.requires("libjpeg/9d")
+            self.options["libjpeg"].shared = self.options.shared
         if self.options.with_libpng and not self.options.multiconfiguration:
             self.requires("libpng/1.6.37")
+            self.options["libpng"].shared = self.options.shared
         if self.options.with_sqlite3 and not self.options.multiconfiguration:
             self.requires("sqlite3/3.31.0")
+            self.options["sqlite3"].shared = self.options.shared
             self.options["sqlite3"].enable_column_metadata = True
         if self.options.with_mysql:
             self.requires("libmysqlclient/8.0.17")
+            self.options["libmysqlclient"].shared = self.options.shared
         if self.options.with_pq:
             self.requires("libpq/11.5")
+            self.options["libpq"].shared = self.options.shared
         if self.options.with_odbc:
             if self.settings.os != "Windows":
                 self.requires("odbc/2.3.7")
+                self.options["odbc"].shared = self.options.shared
         if self.options.with_sdl2:
             self.requires("sdl2/2.0.10@bincrafters/stable")
+            self.options["sdl2"].shared = self.options.shared
         if self.options.with_openal:
             self.requires("openal/1.19.1")
+            self.options["openal"].shared = self.options.shared
         if self.options.with_libalsa:
             self.requires("libalsa/1.1.9")
+            self.options["libalsa"].shared = self.options.shared
         if self.options.GUI and self.settings.os == "Linux":
             self.requires("xorg/system")
             if not tools.cross_building(self, skip_x64_x86=True):
                 self.requires("xkbcommon/0.10.0")
+                self.options["xkbcommon"].shared = self.options.shared
         if self.options.with_zstd:
             self.requires("zstd/1.4.4")
+            self.options["zstd"].shared = self.options.shared
         if self.options.qtwebengine and self.settings.os == "Linux":
             self.requires("xorg/system")
             self.requires("expat/2.2.9")
+            self.options["expat"].shared = self.options.shared
             #self.requires("ffmpeg/4.2@bincrafters/stable")
             self.requires("opus/1.3.1")
+            self.options["opus"].shared = self.options.shared
 
         if self.options.opengl in ["desktop", "es2"]:
             self.requires('opengl/system')
+
 
     def system_requirements(self):
         pack_names = []
@@ -467,6 +499,8 @@ class QtConan(ConanFile):
                     args.append("-static-runtime")
         else:
             args.insert(0, "-shared")
+            if self.settings.os == "Linux":
+                args.insert(1, "-reduce-relocations")
         if self.options.multiconfiguration:
             args.append("-debug-and-release")
         elif self.settings.build_type == "Debug":
@@ -511,7 +545,7 @@ class QtConan(ConanFile):
             else:
                 args += ["-openssl-linked"]
 
-        # args.append("--iconv=" + ("gnu" if self.options.with_libiconv else "no"))
+        args.append("--iconv=" + ("gnu" if self.options.with_libiconv else "no"))
 
         args.append("--glib=" + ("yes" if self.options.with_glib else "no"))
         args.append("--pcre=" + ("system" if self.options.with_pcre2 else "qt"))
@@ -544,7 +578,7 @@ class QtConan(ConanFile):
                   ("openssl", "OPENSSL"),
                   ("pcre2", "PCRE2"),
                   ("glib", "GLIB"),
-                  # ("libiconv", "ICONV"),
+                  ("libiconv", "ICONV"),
                   ("double-conversion", "DOUBLECONVERSION"),
                   ("freetype", "FREETYPE"),
                   ("fontconfig", "FONTCONFIG"),
